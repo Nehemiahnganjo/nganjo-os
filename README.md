@@ -1,63 +1,64 @@
 # Ng'anjo OS
 
-**Version:** 1.0 Lite — *"Arise"*  
-**Creator:** Nehemiah Ng'anjo  
-**Base:** Arch Linux | **Desktop:** GNOME on Wayland | **Arch:** x86_64
+**Version:** 1.0 Lite — "Arise"  
+**By:** Nehemiah Ng'anjo  
+**Base:** Arch Linux | GNOME on Wayland | x86_64
 
 ---
 
-## Overview
+## What is this?
 
-Ng'anjo OS is a lightweight, performance-focused Arch Linux-based distribution featuring a clean GNOME/Wayland desktop, a custom installer, and out-of-the-box hardware support.
+its my own linux distro built on arch. runs gnome on wayland, has a custom installer and works on most hardware out of the box. still in early stages but its functional.
 
 ---
 
 ## Features
 
-- GNOME on Wayland with custom branding and theming
-- Graphical installer via Calamares
-- zsh with autosuggestions, syntax highlighting, and fzf
-- PipeWire audio, Bluetooth, NetworkManager
-- zram swap for improved performance on low-RAM systems
-- Plymouth boot animation
-- Custom performance tuning (CPU governor, I/O scheduler, sysctl)
-- Firefox pre-installed; Brave available via AUR
-- Flatpak + Flathub ready
+- gnome on wayland (clean, no bloat)
+- calamares installer (graphical)
+- zsh with autosuggestions + syntax highlighting + fzf
+- pipewire audio
+- bluetooth works
+- zram swap (good for low ram machines)
+- plymouth boot animation
+- cpu governor + io scheduler tuning
+- firefox comes preinstalled, brave can be installed via aur
+- flatpak ready
 
 ---
 
 ## Requirements
 
-| Component | Minimum |
-|-----------|---------|
-| CPU | x86_64, 2 cores |
-| RAM | 2 GB (4 GB recommended) |
-| Disk | 20 GB |
-| Boot | UEFI |
+- 64bit cpu, at least 2 cores
+- 2gb ram minimum (4gb recommended)
+- 20gb disk space
+- UEFI boot (no legacy bios support)
 
 ---
 
-## Building the ISO
+## How to Build
+
+you need an arch linux machine to build this
 
 ```bash
-# Install dependencies (Arch Linux host required)
+# install archiso first
 sudo pacman -S archiso
 
-# Build
+# then just run
 sudo bash scripts/build.sh
 
-# Build + clean previous artifacts
+# clean build
 sudo bash scripts/build.sh --clean
 
-# Build + auto-launch QEMU test
+# build and test in qemu
 sudo bash scripts/build.sh --test
 ```
 
-Output ISO is written to `out/`.
+iso goes to `out/` folder when done. takes like 20-45 mins depending on your internet
 
 ---
 
-## Testing in QEMU
+## Testing
 
 ```bash
 sudo bash scripts/test_iso.sh --uefi out/nganjo-os-*.iso
@@ -71,45 +72,46 @@ sudo bash scripts/test_iso.sh --uefi out/nganjo-os-*.iso
 sudo dd bs=4M if=out/nganjo-os-*.iso of=/dev/sdX status=progress oflag=sync
 ```
 
-Replace `/dev/sdX` with your USB device.
+change /dev/sdX to your actual usb drive. be careful not to wipe the wrong drive
 
 ---
 
-## Post-Install Setup
+## After Installing
 
-After installing to disk, run:
+run this after first boot:
 
 ```bash
 sudo nganjo-setup
 ```
 
-This will:
-- Update system packages
-- Install yay (AUR helper)
-- Enable UFW firewall and AppArmor
-- Optimize pacman mirrors with reflector
-- Enable Flatpak + Flathub
+it will:
+- update packages
+- install yay
+- setup ufw firewall
+- enable apparmor
+- fix mirrors with reflector
+- add flathub
 
 ---
 
-## Project Structure
+## Folder Structure
 
 ```
 nganjo-os/
-├── airootfs/          # OS overlay (configs, scripts, branding)
-├── docs/              # Additional documentation
-├── efiboot/           # UEFI systemd-boot entries
-├── grub/              # GRUB boot config
-├── scripts/           # Build, chroot, post-install, test scripts
-├── syslinux/          # Legacy BIOS boot
-├── packages.x86_64    # Package list
-├── pacman.conf        # Pacman config used during build
-└── profiledef.sh      # archiso profile definition
+├── airootfs/       # all the os configs and scripts
+├── docs/           # docs
+├── efiboot/        # uefi boot stuff
+├── grub/           # grub config
+├── scripts/        # build and setup scripts
+├── syslinux/       # legacy boot (just in case)
+├── packages.x86_64 # package list
+├── pacman.conf     # pacman config for build
+└── profiledef.sh   # archiso profile
 ```
 
 ---
 
-## Documentation
+## Docs
 
 - [Build Guide](docs/BUILD.md)
 - [Install Guide](docs/INSTALL.md)
@@ -120,8 +122,8 @@ nganjo-os/
 
 ## License
 
-GPL-2.0 — see [LICENSE](LICENSE)
+GPL-2.0
 
 ---
 
-*Ng'anjo OS — Built for those who arise.*
+*built for those who arise.*
