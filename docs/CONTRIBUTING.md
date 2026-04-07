@@ -1,46 +1,32 @@
 # Contributing
 
-## Getting Started
+## how to contribute
 
-1. Fork the repository on GitHub
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/nganjo-os.git
-   cd nganjo-os
-   ```
-3. Create a branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+fork the repo, make your changes, open a pull request. thats basically it.
 
-## What You Can Contribute
+```bash
+git clone https://github.com/YOUR_USERNAME/nganjo-os.git
+cd nganjo-os
+git checkout -b your-branch-name
+```
 
-- Bug fixes in build or chroot scripts
-- New packages in `packages.x86_64`
-- Improved Calamares module configs in `airootfs/etc/calamares/`
-- Performance tuning improvements
-- Documentation improvements
-- Branding assets (wallpapers, icons, Plymouth themes)
+## what you can help with
 
-## Guidelines
+- fixing bugs in the build or chroot scripts
+- adding or removing packages in `packages.x86_64`
+- improving calamares config
+- better performance tuning
+- docs
+- wallpapers or other branding stuff
 
-- Test your changes by building the ISO: `sudo bash scripts/build.sh --clean`
-- Keep commits focused — one change per commit
-- Use clear commit messages: `fix: ...`, `feat: ...`, `docs: ...`
-- Do not commit build artifacts (`work/`, `out/`, `*.iso`)
+## before submitting
 
-## Submitting a Pull Request
+- test your changes by actually building the iso
+- dont commit the `work/` or `out/` folders or any .iso files
+- keep commits clean, one thing per commit
 
-1. Push your branch to your fork
-2. Open a Pull Request against `main`
-3. Describe what you changed and why
+## reporting bugs
 
-## Reporting Issues
+open an issue at https://github.com/Nehemiahnganjo/nganjo-os/issues
 
-Open an issue at: https://github.com/Nehemiahnganjo/nganjo-os/issues
-
-Include:
-- What you expected to happen
-- What actually happened
-- Steps to reproduce
-- Host OS and hardware info
+just describe what went wrong and how to reproduce it. include your hardware if its hardware related.
