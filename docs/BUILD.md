@@ -1,106 +1,68 @@
-# Ng'anjo OS — Build Guide
-**Creator: Nehemiah Ng'anjo**
+# Build Guide
 
----
+## Prerequisites
 
-## Requirements
+- Arch Linux host (or Arch-based distro)
+- Root access
+- Internet connection (for AUR packages during build)
 
-| Item | Minimum |
-|---|---|
-| OS | Arch Linux or any Arch-based distro |
-| RAM | 4 GB (8 GB recommended) |
-| Disk | 20 GB free space |
-| Internet | Required (downloads packages) |
-| Tools | `archiso`, `git`, `sudo` |
+## Install Build Dependencies
 
-Install archiso:
 ```bash
-sudo pacman -S archiso git
+sudo pacman -S archiso squashfs-tools libisoburn dosfstools mtools
 ```
 
----
-
-## Quick Build
+## Build the ISO
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/nganjo/nganjo-os.git
-cd nganjo-os
-
-# 2. Build the ISO
+# Standard build
 sudo bash scripts/build.sh
 
-# 3. Find your ISO
-ls -lh output/nganjo-os-*.iso
-```
-
-Estimated build time: **20–45 minutes** depending on hardware and mirrors.
-Estimated ISO size: **~3–4 GB**
-
----
-
-## Clean Build
-
-To remove all previous build artifacts before starting fresh:
-
-```bash
+# Clean previous work/ directory first
 sudo bash scripts/build.sh --clean
-```
 
----
-
-## Build + Auto-Test
-
-```bash
+# Build and auto-test in QEMU
 sudo bash scripts/build.sh --test
 ```
 
-This builds the ISO and immediately launches it in QEMU (UEFI mode).
+## Build Steps (what the script does)
 
----
+| Step | Action |
+|------|--------|
+| 1 | Check build dependencies |
+| 2 | Clean previous artifacts |
+| 3 | Verify airootfs overlay |
+| 4 | Apply branding (hostname, build date) |
+| 5 | Pre-compile dconf database |
+| 6 | Install chroot customization hook |
+| 7 | Run mkarchiso |
+| 8 | Generate SHA256 checksum |
+| 9 | Report output path and size |
 
-## Manual QEMU Testing
+## Chroot Phase (network required)
 
-```bash
-# UEFI mode (recommended)
-sudo bash scripts/test_iso.sh --uefi output/nganjo-os-*.iso
+During `mkarchiso`, the script runs `scripts/setup_chroot.sh` inside the chroot which:
 
-# BIOS/Legacy mode
-sudo bash scripts/test_iso.sh --bios output/nganjo-os-*.iso
+- Generates locales and sets timezone
+- Enables systemd services
+- Creates the live user `nganjo`
+- Installs `yay` AUR helper
+- Builds and installs Calamares installer
+- Installs AUR packages: `papirus-icon-theme`, `bibata-cursor-theme-bin`, `adw-gtk3`, GNOME extensions
+- Sets Plymouth boot theme
+
+> If no network is available, AUR packages are skipped. The ISO will still boot but the graphical installer may be missing.
+
+## Output
+
+```
+out/
+├── nganjo-os-1.0-lite-YYYY.MM.DD-x86_64.iso
+└── nganjo-os-1.0-lite-YYYY.MM.DD-x86_64.iso.sha256
 ```
 
----
-
-## Write to USB
+## Verify Checksum
 
 ```bash
-sudo dd bs=4M \
-    if=output/nganjo-os-YYYY.MM.DD-x86_64.iso \
-    of=/dev/sdX \
-    status=progress oflag=sync
+sha256sum -c out/nganjo-os-*.iso.sha256
 ```
-
-Replace `/dev/sdX` with your USB device (use `lsblk` to identify it).
-
-> **Warning:** This overwrites the entire USB device.
-
----
-
-## Verify ISO Integrity
-
-```bash
-sha256sum -c output/nganjo-os-*.iso.sha256
-```
-
----
-
-## Notes
-
-- AUR packages (Papirus icons, Bibata cursor, GNOME extensions) are installed via `scripts/setup_chroot.sh` — they cannot go in `packages.x86_64` directly
-- The `dconf` database is compiled inside the build chroot automatically
-- Both UEFI (systemd-boot) and BIOS (GRUB + syslinux) boot modes are supported
-
----
-
-*Ng'anjo OS — Built on Arch. Engineered to run anywhere.*
-*Creator: Nehemiah Ng'anjo*
