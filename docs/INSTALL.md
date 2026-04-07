@@ -1,73 +1,64 @@
 # Install Guide
 
-## Boot the ISO
+## boot the iso
 
-1. Write the ISO to a USB drive:
-   ```bash
-   sudo dd bs=4M if=out/nganjo-os-*.iso of=/dev/sdX status=progress oflag=sync
-   ```
-2. Boot from USB (ensure UEFI mode is enabled in BIOS)
-3. The live session will auto-login as user `nganjo`
+write it to usb first:
 
-## Graphical Install (Calamares)
+```bash
+sudo dd bs=4M if=out/nganjo-os-*.iso of=/dev/sdX status=progress oflag=sync
+```
 
-1. Click **Install Ng'anjo OS** on the desktop or run `nganjo-installer`
-2. Follow the steps:
-   - Language & locale
-   - Keyboard layout
-   - Disk partitioning (auto or manual)
-   - User account creation
-   - Summary → Install
-3. Reboot when prompted
+make sure uefi is enabled in bios. legacy bios wont work.
 
-## Post-Install Setup
+boot from usb and it will auto login to the live session as user `nganjo`.
 
-On first boot, run:
+## installing
+
+click the install icon on the desktop or run `nganjo-installer` in terminal.
+
+follow the steps in calamares:
+- pick language
+- pick keyboard
+- partition your disk
+- create your user
+- hit install
+
+reboot when its done.
+
+## after install
+
+first thing to do after booting into your installed system:
 
 ```bash
 sudo nganjo-setup
 ```
 
-This will:
-- Update all packages
-- Install `yay` AUR helper
-- Enable UFW firewall (deny incoming, allow outgoing)
-- Enable AppArmor
-- Optimize pacman mirrors with reflector
-- Add Flathub repository
+this sets up the firewall, installs yay, fixes mirrors, adds flathub etc.
 
-## Default Credentials (Live Session)
+## live session login
 
-| User | Password |
+| user | password |
 |------|----------|
-| `nganjo` | `nganjo` |
-| `root` | `nganjo` |
+| nganjo | nganjo |
+| root | nganjo |
 
-> These credentials are removed after installation. You set your own password during the Calamares install.
+these are only for the live session. you set your own password during install.
 
-## Partitioning Recommendations
+## partitioning
 
-| Partition | Size | Filesystem |
-|-----------|------|------------|
-| EFI | 512 MB | FAT32 |
-| `/` | 20 GB+ | ext4 / btrfs |
-| swap | RAM size | zram (auto) |
+if you're doing manual partitioning:
 
-> zram swap is configured automatically — no swap partition needed.
+- efi partition: 512mb, fat32
+- root `/`: 20gb+, ext4 or btrfs
+- no swap needed, zram handles that automatically
 
-## Troubleshooting
+## common issues
 
-**Black screen on boot:**  
-Add `nomodeset` to kernel parameters (use the VM boot entry in GRUB).
+**black screen on boot** — use the VM/fallback boot entry in grub, it adds nomodeset
 
-**Calamares not found:**  
-Connect to internet and run:
-```bash
-yay -S calamares
-```
+**calamares missing** — connect to internet and run `yay -S calamares`
 
-**No sound:**  
-PipeWire should auto-start. If not:
+**no sound** — run:
 ```bash
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
 ```
