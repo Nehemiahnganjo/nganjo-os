@@ -74,7 +74,6 @@ qt6-wayland
 
 # ── DESKTOP (KDE Plasma — minimal) ────────────────────────────────────────────
 plasma-desktop
-plasma-wayland-session
 sddm
 sddm-kcm
 kscreen
