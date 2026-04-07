@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- KDE-style welcome icon: teal circle + rising sun / arise motif -->
+  <circle cx="128" cy="128" r="120" fill="#00D2B4" opacity="0.15"/>
+  <circle cx="128" cy="128" r="120" fill="none" stroke="#00D2B4" stroke-width="8"/>
+  <!-- sun rising -->
+  <path d="M128 155 A44 44 0 0 1 84 155 Z" fill="#FFD166"/>
+  <circle cx="128" cy="115" r="30" fill="#FFD166"/>
+  <!-- rays -->
+  <line x1="128" y1="68" x2="128" y2="52" stroke="#FFD166" stroke-width="7" stroke-linecap="round"/>
+  <line x1="168" y1="80" x2="179" y2="69" stroke="#FFD166" stroke-width="7" stroke-linecap="round"/>
+  <line x1="88"  y1="80" x2="77"  y2="69" stroke="#FFD166" stroke-width="7" stroke-linecap="round"/>
+  <line x1="180" y1="115" x2="196" y2="115" stroke="#FFD166" stroke-width="7" stroke-linecap="round"/>
+  <line x1="76"  y1="115" x2="60"  y2="115" stroke="#FFD166" stroke-width="7" stroke-linecap="round"/>
+  <!-- horizon line -->
+  <line x1="60" y1="155" x2="196" y2="155" stroke="#00D2B4" stroke-width="6" stroke-linecap="round"/>
+</svg>
