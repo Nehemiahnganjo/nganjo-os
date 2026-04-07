@@ -1,0 +1,182 @@
+# Ng'anjo OS — Package List (KDE Edition, Minimal)
+# Creator: Nehemiah Ng'anjo
+
+# ── BASE SYSTEM ────────────────────────────────────────────────────────────────
+base
+base-devel
+linux
+linux-firmware
+systemd
+systemd-sysvcompat
+dbus
+polkit
+sudo
+mkinitcpio
+mkinitcpio-archiso
+archiso
+
+# ── MICROCODE ──────────────────────────────────────────────────────────────────
+amd-ucode
+intel-ucode
+terminus-font
+
+# ── BOOT & FILESYSTEM ──────────────────────────────────────────────────────────
+grub
+efibootmgr
+os-prober
+memtest86+
+memtest86+-efi
+btrfs-progs
+e2fsprogs
+ntfs-3g
+exfatprogs
+xfsprogs
+f2fs-tools
+lvm2
+cryptsetup
+dosfstools
+parted
+gptfdisk
+
+# ── NETWORKING ─────────────────────────────────────────────────────────────────
+networkmanager
+network-manager-applet
+wpa_supplicant
+iwd
+dhcpcd
+nss-mdns
+openssh
+curl
+wget
+avahi
+iproute2
+iputils
+
+# ── DISPLAY & GRAPHICS ─────────────────────────────────────────────────────────
+mesa
+mesa-utils
+libva-mesa-driver
+vulkan-icd-loader
+vulkan-intel
+vulkan-radeon
+libva-intel-driver
+xf86-video-amdgpu
+xf86-video-nouveau
+xf86-video-vesa
+xf86-input-libinput
+
+# ── WAYLAND ────────────────────────────────────────────────────────────────────
+wayland
+wayland-utils
+xorg-xwayland
+qt5-wayland
+qt6-wayland
+
+# ── DESKTOP (KDE Plasma — minimal) ────────────────────────────────────────────
+plasma-desktop
+plasma-wayland-session
+sddm
+sddm-kcm
+kscreen
+powerdevil
+plasma-nm
+plasma-pa
+plasma-systemmonitor
+kinfocenter
+systemsettings
+kde-gtk-config
+breeze
+breeze-gtk
+xdg-desktop-portal-kde
+xdg-user-dirs
+kio
+kio-extras
+dolphin
+konsole
+ark
+kate
+spectacle
+gwenview
+okular
+kcalc
+
+# ── POLKIT / AUTH ──────────────────────────────────────────────────────────────
+polkit-kde-agent
+kwallet
+kwallet-pam
+kwalletmanager
+libsecret
+
+# ── FONTS ──────────────────────────────────────────────────────────────────────
+ttf-jetbrains-mono
+ttf-dejavu
+noto-fonts
+noto-fonts-emoji
+ttf-font-awesome
+
+# ── AUDIO ──────────────────────────────────────────────────────────────────────
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+alsa-utils
+
+# ── BLUETOOTH ──────────────────────────────────────────────────────────────────
+bluez
+bluez-utils
+bluedevil
+
+# ── SECURITY ───────────────────────────────────────────────────────────────────
+ufw
+apparmor
+gnupg
+
+# ── PERFORMANCE ────────────────────────────────────────────────────────────────
+zram-generator
+
+# ── BOOT ANIMATION ─────────────────────────────────────────────────────────────
+plymouth
+plymouth-kcm
+
+# ── TERMINAL & SHELL ───────────────────────────────────────────────────────────
+zsh
+zsh-completions
+zsh-autosuggestions
+zsh-syntax-highlighting
+bash-completion
+fastfetch
+dialog
+less
+fzf
+bat
+eza
+htop
+btop
+tree
+ripgrep
+fd
+tmux
+rsync
+unzip
+zip
+p7zip
+man-db
+man-pages
+lsof
+which
+file
+diffutils
+
+# ── UTILITIES ──────────────────────────────────────────────────────────────────
+git
+flatpak
+reflector
+pacman-contrib
+archlinux-keyring
+zenity
+
+# ── BROWSER ────────────────────────────────────────────────────────────────────
+firefox
+
+# ── INSTALLER ──────────────────────────────────────────────────────────────────
+# calamares installed via AUR in setup_chroot_kde.sh

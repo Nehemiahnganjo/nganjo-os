@@ -24,6 +24,7 @@ file_permissions=(
     ["/etc/sudoers.d"]="0:0:750"
     ["/etc/sudoers.d/nganjo-live"]="0:0:440"
     ["/etc/gdm/custom.conf"]="0:0:644"
+    ["/etc/sddm.conf.d/autologin.conf"]="0:0:644"
     ["/root"]="0:0:750"
     ["/root/.automated_script.sh"]="0:0:755"
     ["/root/customize_airootfs.sh"]="0:0:755"

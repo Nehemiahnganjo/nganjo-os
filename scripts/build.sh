@@ -46,10 +46,13 @@ echo -e "${RESET}"
 # ── Parse args ─────────────────────────────────────────────────────────────────
 DO_CLEAN=false
 DO_TEST=false
+EDITION="gnome"
 for arg in "$@"; do
     case "$arg" in
-        --clean) DO_CLEAN=true ;;
-        --test)  DO_TEST=true  ;;
+        --clean) DO_CLEAN=true  ;;
+        --test)  DO_TEST=true   ;;
+        --kde)   EDITION="kde"  ;;
+        --gnome) EDITION="gnome";;
     esac
 done
 
@@ -109,11 +112,23 @@ fi
 
 # ── Step 6: Prepare AUR packages hint ────────────────────────────────────────
 step "6/9 — Wiring chroot customization hook"
-CHROOT_HOOK="${PROFILE_DIR}/airootfs/root/customize_airootfs.sh"
-cp "${SCRIPT_DIR}/setup_chroot.sh" "$CHROOT_HOOK"
+if [[ "$EDITION" == "kde" ]]; then
+    log "Edition: KDE Plasma (minimal)"
+    cp "${PROFILE_DIR}/packages.kde.x86_64" "${PROFILE_DIR}/packages.x86_64.build"
+    CHROOT_HOOK="${PROFILE_DIR}/airootfs/root/customize_airootfs.sh"
+    cp "${SCRIPT_DIR}/setup_chroot_kde.sh" "$CHROOT_HOOK"
+    ISO_NAME="nganjo-os-kde-1.0-lite-${ISO_DATE}-x86_64.iso"
+else
+    log "Edition: GNOME (default)"
+    cp "${PROFILE_DIR}/packages.x86_64" "${PROFILE_DIR}/packages.x86_64.build"
+    CHROOT_HOOK="${PROFILE_DIR}/airootfs/root/customize_airootfs.sh"
+    cp "${SCRIPT_DIR}/setup_chroot.sh" "$CHROOT_HOOK"
+    ISO_NAME="nganjo-os-gnome-1.0-lite-${ISO_DATE}-x86_64.iso"
+fi
 chmod +x "$CHROOT_HOOK"
-log "setup_chroot.sh installed as customize_airootfs hook."
-warn "AUR packages require network during build. Offline fallback is handled in setup_chroot.sh."
+# Swap the active package list so mkarchiso picks up the right one
+cp "${PROFILE_DIR}/packages.x86_64.build" "${PROFILE_DIR}/packages.x86_64"
+warn "AUR packages require network during build. Offline fallback is handled in the chroot script."
 
 # ── Step 7: Build ISO ─────────────────────────────────────────────────────────
 step "7/9 — Building ISO with mkarchiso"
