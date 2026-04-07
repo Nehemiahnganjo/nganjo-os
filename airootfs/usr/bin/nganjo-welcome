@@ -31,7 +31,7 @@ show_banner() {
 EOF
     echo -e "${RESET}"
     echo -e "   ${GOLD}${BOLD}Version 1.0 Lite — \"Arise\"${RESET}   ${GRAY}│   Creator: Nehemiah Ng'anjo${RESET}"
-    echo -e "   ${GRAY}Arch Linux based  │  x86_64  │  GNOME on Wayland${RESET}"
+    echo -e "   ${GRAY}Arch Linux based  │  x86_64  │  $([ "$XDG_CURRENT_DESKTOP" = "KDE" ] && echo "KDE Plasma on Wayland" || echo "GNOME on Wayland")${RESET}"
     echo ""
     echo -e "   ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo ""
