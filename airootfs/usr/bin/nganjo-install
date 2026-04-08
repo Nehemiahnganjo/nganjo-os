@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+# ══════════════════════════════════════════════════════════════════════════════
+# Ng'anjo OS — Terminal Installer
+# Creator: Nehemiah Ng'anjo
+# Run as root from the live session
+# ══════════════════════════════════════════════════════════════════════════════
+
+set -euo pipefail
+
+# ── Colors ────────────────────────────────────────────────────────────────────
+TEAL='\033[38;2;0;210;180m'
+GOLD='\033[38;2;255;209;102m'
+GREEN='\033[38;2;6;214;160m'
+RED='\033[38;2;255;77;109m'
+WHITE='\033[38;2;230;237;245m'
+GRAY='\033[38;2;100;110;130m'
+RESET='\033[0m'
+BOLD='\033[1m'
+
+log()  { echo -e "  ${TEAL}[✓]${RESET} $1"; }
+warn() { echo -e "  ${GOLD}[!]${RESET} $1"; }
+err()  { echo -e "  ${RED}[✗]${RESET} $1"; exit 1; }
+step() { echo -e "\n  ${BOLD}${TEAL}▶ $1${RESET}\n"; }
+ask()  { echo -ne "  ${GOLD}$1${RESET} "; }
+
+MOUNT="/mnt/nganjo-install"
+
+banner() {
+    clear
+    echo -e "${TEAL}${BOLD}"
+    cat << 'EOF'
+   ╔══════════════════════════════════════════════════════════════╗
+   ║          Ng'anjo OS — Installer                             ║
+   ║          Version 1.0 Lite — "Arise"                         ║
+   ╚══════════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${RESET}"
+}
+
+# ── Root check ────────────────────────────────────────────────────────────────
+[[ $EUID -ne 0 ]] && err "Run as root: sudo nganjo-install"
+
+banner
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 1 — Disk selection
+# ══════════════════════════════════════════════════════════════════════════════
+step "1/7 — Select installation disk"
+echo -e "  ${WHITE}Available disks:${RESET}\n"
+lsblk -d -o NAME,SIZE,MODEL --noheadings | grep -v loop | while read -r line; do
+    echo -e "    ${TEAL}▸${RESET}  $line"
+done
+echo ""
+warn "ALL DATA ON THE SELECTED DISK WILL BE ERASED."
+echo ""
+ask "Enter disk (e.g. sda, nvme0n1):"
+read -r DISK_NAME
+DISK="/dev/${DISK_NAME}"
+[[ ! -b "$DISK" ]] && err "Disk not found: $DISK"
+
+# Confirm
+echo ""
+warn "You selected: ${DISK} — this will be wiped!"
+ask "Type 'yes' to confirm:"
+read -r CONFIRM
+[[ "$CONFIRM" != "yes" ]] && err "Aborted."
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 2 — Timezone & locale
+# ══════════════════════════════════════════════════════════════════════════════
+step "2/7 — Timezone & locale"
+ask "Timezone (e.g. Africa/Nairobi, Europe/London) [UTC]:"
+read -r TIMEZONE
+TIMEZONE="${TIMEZONE:-UTC}"
+[[ ! -f "/usr/share/zoneinfo/${TIMEZONE}" ]] && { warn "Invalid timezone, defaulting to UTC."; TIMEZONE="UTC"; }
+
+ask "Locale (e.g. en_US.UTF-8) [en_US.UTF-8]:"
+read -r LOCALE
+LOCALE="${LOCALE:-en_US.UTF-8}"
+
+ask "Hostname [nganjo-os]:"
+read -r HOSTNAME
+HOSTNAME="${HOSTNAME:-nganjo-os}"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 3 — User setup
+# ══════════════════════════════════════════════════════════════════════════════
+step "3/7 — User setup"
+ask "Username:"
+read -r USERNAME
+[[ -z "$USERNAME" ]] && err "Username cannot be empty."
+
+ask "Password for ${USERNAME}:"
+read -rs USER_PASS
+echo ""
+ask "Root password:"
+read -rs ROOT_PASS
+echo ""
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 4 — Partition & format
+# ══════════════════════════════════════════════════════════════════════════════
+step "4/7 — Partitioning ${DISK}"
+
+# Detect partition prefix (nvme uses p1/p2, sda uses 1/2)
+if [[ "$DISK" == *"nvme"* ]] || [[ "$DISK" == *"mmcblk"* ]]; then
+    PART_EFI="${DISK}p1"
+    PART_ROOT="${DISK}p2"
+else
+    PART_EFI="${DISK}1"
+    PART_ROOT="${DISK}2"
+fi
+
+log "Wiping and partitioning ${DISK}..."
+wipefs -af "$DISK"
+sgdisk -Z "$DISK"
+sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI"  "$DISK"
+sgdisk -n 2:0:0     -t 2:8300 -c 2:"ROOT" "$DISK"
+partprobe "$DISK"
+sleep 1
+
+log "Formatting partitions..."
+mkfs.fat -F32 -n EFI  "$PART_EFI"
+mkfs.ext4 -L ROOT -F  "$PART_ROOT"
+
+log "Mounting..."
+mkdir -p "${MOUNT}"
+mount "$PART_ROOT" "${MOUNT}"
+mkdir -p "${MOUNT}/boot/efi"
+mount "$PART_EFI" "${MOUNT}/boot/efi"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 5 — Install system (unsquash)
+# ══════════════════════════════════════════════════════════════════════════════
+step "5/7 — Installing system (this takes a few minutes)"
+
+SFS=$(find /run/archiso/airootfs /run/mnt/*/arch/x86_64 -name "airootfs.sfs" 2>/dev/null | head -1)
+[[ -z "$SFS" ]] && err "Cannot find airootfs.sfs — are you running from the live ISO?"
+
+log "Unsquashing: ${SFS}"
+unsquashfs -f -d "${MOUNT}" "$SFS"
+log "System files installed."
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 6 — Configure system in chroot
+# ══════════════════════════════════════════════════════════════════════════════
+step "6/7 — Configuring system"
+
+# Generate fstab
+log "Generating fstab..."
+mkdir -p "${MOUNT}/etc"
+genfstab -U "${MOUNT}" >> "${MOUNT}/etc/fstab"
+
+# Write chroot config script
+cat > "${MOUNT}/root/nganjo-configure.sh" << CHROOTEOF
+#!/usr/bin/env bash
+set -e
+
+# Locale
+echo "${LOCALE} UTF-8" > /etc/locale.gen
+locale-gen
+echo "LANG=${LOCALE}" > /etc/locale.conf
+
+# Timezone
+ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+hwclock --systohc
+
+# Hostname
+echo "${HOSTNAME}" > /etc/hostname
+cat > /etc/hosts << 'HOSTS'
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
+HOSTS
+
+# Users
+echo "root:${ROOT_PASS}" | chpasswd
+useradd -m -G wheel,audio,video,storage,optical,network,input -s /bin/zsh "${USERNAME}" 2>/dev/null || true
+echo "${USERNAME}:${USER_PASS}" | chpasswd
+echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/wheel
+chmod 440 /etc/sudoers.d/wheel
+
+# Remove live user if present
+userdel -r nganjo 2>/dev/null || true
+rm -f /etc/sudoers.d/nganjo-live
+
+# Default shell
+chsh -s /bin/zsh root
+chsh -s /bin/zsh "${USERNAME}"
+
+# mkinitcpio
+mkinitcpio -P
+
+# Bootloader — GRUB
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=NganjoOS --recheck
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Enable services
+systemctl enable NetworkManager
+systemctl enable systemd-timesyncd
+systemctl enable bluetooth 2>/dev/null || true
+systemctl enable ufw 2>/dev/null || true
+systemctl enable apparmor 2>/dev/null || true
+systemctl enable zram-generator 2>/dev/null || true
+
+# Enable display manager
+if command -v sddm &>/dev/null; then
+    systemctl enable sddm
+elif command -v gdm &>/dev/null; then
+    systemctl enable gdm
+fi
+
+# Disable live-only services
+systemctl disable avahi-daemon 2>/dev/null || true
+
+echo "CONFIGURE_DONE"
+CHROOTEOF
+chmod +x "${MOUNT}/root/nganjo-configure.sh"
+
+log "Running configuration in chroot..."
+arch-chroot "${MOUNT}" /root/nganjo-configure.sh | tail -5
+rm -f "${MOUNT}/root/nganjo-configure.sh"
+log "Chroot configuration complete."
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 7 — Cleanup & finish
+# ══════════════════════════════════════════════════════════════════════════════
+step "7/7 — Finishing up"
+
+# Remove live artifacts
+rm -f "${MOUNT}/root/.automated_script.sh"
+rm -f "${MOUNT}/root/customize_airootfs.sh"
+rm -f "${MOUNT}/etc/gdm/custom.conf" 2>/dev/null || true  # remove auto-login
+
+log "Unmounting..."
+umount -R "${MOUNT}"
+
+echo ""
+echo -e "  ${GREEN}${BOLD}Installation complete!${RESET}"
+echo ""
+echo -e "  ${TEAL}User    :${RESET} ${WHITE}${USERNAME}${RESET}"
+echo -e "  ${TEAL}Hostname:${RESET} ${WHITE}${HOSTNAME}${RESET}"
+echo -e "  ${TEAL}Timezone:${RESET} ${WHITE}${TIMEZONE}${RESET}"
+echo ""
+echo -e "  ${GOLD}Remove the USB/ISO and reboot:${RESET}"
+echo -e "  ${TEAL}  reboot${RESET}"
+echo ""
