@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ng'anjo OS — NeoDesktop Edition Chroot Customization Script
+# Ng'anjo OS — Ng'anjo GUI Edition Chroot Customization Script
 # Creator: Nehemiah Ng'anjo
 
 TEAL='\033[38;2;0;210;180m'
@@ -40,13 +40,13 @@ chmod 440 /etc/sudoers.d/nganjo-live
 mkdir -p /home/nganjo/{Desktop,Documents,Downloads,Music,Pictures,Videos}
 chown -R nganjo:nganjo /home/nganjo
 
-# ── SDDM autologin → NeoDesktop session ──────────────────────────────────────
-log "Configuring SDDM autologin into NeoDesktop..."
+# ── SDDM autologin → Ng'anjo GUI session ──────────────────────────────────────
+log "Configuring SDDM autologin into Ng'anjo GUI..."
 mkdir -p /etc/sddm.conf.d
 cat > /etc/sddm.conf.d/autologin.conf << 'EOF'
 [Autologin]
 User=nganjo
-Session=neodesktop
+Session=nganjo-gui
 EOF
 
 # ── Plymouth boot theme ───────────────────────────────────────────────────────
@@ -57,4 +57,4 @@ plymouth-set-default-theme -R nganjo 2>/dev/null || true
 log "Cleaning package cache..."
 yes | pacman -Sc --noconfirm 2>/dev/null || true
 
-log "NeoDesktop chroot customization complete!"
+log "Ng'anjo GUI chroot customization complete!"

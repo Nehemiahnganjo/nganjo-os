@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Ng'anjo GUI
+Comment=Ng'anjo OS Ng'anjo GUI (Rust/egui)
+Exec=nganjo-gui
+Type=Application
