@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Ng'anjo OS — Installer launcher (opens Rust TUI in a terminal window)
+export DISPLAY="${DISPLAY:-:0}"
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
+
+if command -v konsole &>/dev/null; then
+    exec konsole --title "Ng'anjo OS" -e nganjo-tui
+elif command -v gnome-terminal &>/dev/null; then
+    exec gnome-terminal --title="Ng'anjo OS" -- nganjo-tui
+else
+    exec nganjo-tui
+fi
