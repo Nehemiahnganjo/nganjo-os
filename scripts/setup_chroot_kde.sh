@@ -103,6 +103,25 @@ else
         2>/dev/null || log "Some AUR packages failed — non-fatal."
 fi
 
+# ── Copy KDE config to /etc/skel so installed users inherit it ───────────────
+log "Installing KDE desktop config to skel..."
+mkdir -p /etc/skel/.config /etc/skel/.local/share/color-schemes /etc/skel/.local/share/konsole
+
+cp /home/nganjo/.config/kdeglobals            /etc/skel/.config/kdeglobals
+cp /home/nganjo/.config/kwinrc                /etc/skel/.config/kwinrc
+cp /home/nganjo/.config/plasmarc              /etc/skel/.config/plasmarc
+cp /home/nganjo/.config/kscreenlockerrc       /etc/skel/.config/kscreenlockerrc
+cp /home/nganjo/.config/konsolerc             /etc/skel/.config/konsolerc
+cp /home/nganjo/.config/plasma-org.kde.plasma.desktop-appletsrc \
+                                               /etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc
+cp /home/nganjo/.local/share/color-schemes/NganjoOS.colors \
+                                               /etc/skel/.local/share/color-schemes/NganjoOS.colors
+cp /home/nganjo/.local/share/konsole/Nganjo.profile \
+                                               /etc/skel/.local/share/konsole/Nganjo.profile
+cp /home/nganjo/.local/share/konsole/NganjoOS.colorscheme \
+                                               /etc/skel/.local/share/konsole/NganjoOS.colorscheme
+log "KDE config installed to skel."
+
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 log "Cleaning package cache..."
 yes | pacman -Sc --noconfirm 2>/dev/null || true
