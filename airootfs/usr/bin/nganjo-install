@@ -8,316 +8,314 @@ set -euo pipefail
 TEAL='\033[38;2;0;210;180m'; GOLD='\033[38;2;255;209;102m'
 GREEN='\033[38;2;6;214;160m'; RED='\033[38;2;255;77;109m'
 WHITE='\033[38;2;230;237;245m'; GRAY='\033[38;2;100;110;130m'
-RESET='\033[0m'; BOLD='\033[1m'
-
-log()  { echo -e "  ${TEAL}[✓]${RESET} $1"; }
-warn() { echo -e "  ${GOLD}[!]${RESET} $1"; }
-err()  { echo -e "\n  ${RED}[✗]${RESET} $1\n"; exit 1; }
-step() { echo -e "\n  ${BOLD}${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"; \
-         echo -e "  ${BOLD}${TEAL}  $1${RESET}"; \
-         echo -e "  ${BOLD}${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"; }
+RESET='\033[0m'; BOLD='\033[1m'; DIM='\033[2m'
 
 MOUNT="/mnt/nganjo"
+TOTAL_STEPS=6
 
+# ── UI helpers ────────────────────────────────────────────────────────────────
 banner() {
     clear
     echo -e "${TEAL}${BOLD}"
-    cat << 'EOF'
-   ╔══════════════════════════════════════════════════════════════╗
-   ║          Ng'anjo OS — Installer                             ║
-   ║          Version 1.0 Lite — "Arise"                         ║
-   ╚══════════════════════════════════════════════════════════════╝
-EOF
+    echo "   ╔══════════════════════════════════════════════════════════════╗"
+    echo "   ║                                                              ║"
+    echo "   ║          Ng'anjo OS — Installer                             ║"
+    echo "   ║          Version 1.0 Lite  ·  \"Arise\"                       ║"
+    echo "   ║                                                              ║"
+    echo "   ╚══════════════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
-    echo -e "  ${GRAY}This installer will guide you through each step.${RESET}"
-    echo -e "  ${GRAY}Most steps just require selecting a number.${RESET}\n"
 }
 
-# menu <title> <item1> <item2> ...  → sets REPLY to chosen index (1-based)
+header() {
+    local step="$1" title="$2"
+    clear; banner
+    # Progress bar
+    local filled=$(( step * 62 / TOTAL_STEPS ))
+    local empty=$(( 62 - filled ))
+    printf "   ${TEAL}["
+    printf '%0.s█' $(seq 1 $filled)
+    printf '%0.s░' $(seq 1 $empty)
+    printf "]${RESET}  ${GRAY}Step ${step}/${TOTAL_STEPS}${RESET}\n\n"
+    echo -e "   ${BOLD}${WHITE}${title}${RESET}\n"
+    echo -e "   ${TEAL}──────────────────────────────────────────────────────────────${RESET}\n"
+}
+
+log()    { echo -e "   ${TEAL}✓${RESET}  $1"; }
+warn()   { echo -e "   ${GOLD}!${RESET}  $1"; }
+err()    { echo -e "\n   ${RED}✗  $1${RESET}\n"; exit 1; }
+info()   { echo -e "   ${GRAY}   $1${RESET}"; }
+
+# Numbered menu — sets $CHOICE to selected index (0-based)
 menu() {
-    local title="$1"; shift
+    local prompt="$1"; shift
     local items=("$@")
-    echo -e "  ${WHITE}${BOLD}${title}${RESET}\n"
     for i in "${!items[@]}"; do
-        echo -e "    ${TEAL}[$((i+1))]${RESET}  ${items[$i]}"
+        echo -e "   ${TEAL}  $((i+1))${RESET}  ${items[$i]}"
     done
     echo ""
     while true; do
-        echo -ne "  ${GOLD}Select [1-${#items[@]}]: ${RESET}"
-        read -r REPLY
-        if [[ "$REPLY" =~ ^[0-9]+$ ]] && (( REPLY >= 1 && REPLY <= ${#items[@]} )); then
-            break
+        echo -ne "   ${GOLD}${prompt} [1-${#items[@]}]: ${RESET}"
+        read -r R
+        if [[ "$R" =~ ^[0-9]+$ ]] && (( R >= 1 && R <= ${#items[@]} )); then
+            CHOICE=$(( R - 1 )); break
         fi
-        echo -e "  ${RED}Invalid — enter a number between 1 and ${#items[@]}${RESET}"
+        echo -e "   ${RED}Enter a number between 1 and ${#items[@]}${RESET}"
     done
 }
 
-[[ $EUID -ne 0 ]] && err "Run as root: sudo nganjo-install"
-banner
+[[ $EUID -ne 0 ]] && err "Run as root:  sudo nganjo-install"
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 1 of 6 — Choose Installation Disk"
+# STEP 1 — DISK
 # ══════════════════════════════════════════════════════════════════════════════
+header 1 "Choose Installation Disk"
+warn "The selected disk will be completely erased.\n"
+
 mapfile -t DISK_NAMES < <(lsblk -d -o NAME --noheadings | grep -v loop)
 DISK_LABELS=()
 for d in "${DISK_NAMES[@]}"; do
-    info=$(lsblk -d -o SIZE,MODEL --noheadings "/dev/$d" 2>/dev/null | tr -s ' ')
-    DISK_LABELS+=("$d  —  $info")
+    sz=$(lsblk -d -o SIZE --noheadings "/dev/$d" | tr -d ' ')
+    mo=$(lsblk -d -o MODEL --noheadings "/dev/$d" | sed 's/^ *//' | cut -c1-30)
+    DISK_LABELS+=("/dev/$d   ${sz}   ${mo}")
 done
 
-menu "Which disk should Ng'anjo OS be installed on?" "${DISK_LABELS[@]}"
-DISK="/dev/${DISK_NAMES[$((REPLY-1))]}"
-
+menu "Select disk" "${DISK_LABELS[@]}"
+DISK="/dev/${DISK_NAMES[$CHOICE]}"
 echo ""
-warn "⚠  ALL DATA on ${DISK} will be permanently erased!"
-echo -ne "  ${GOLD}Are you sure? [yes/no]: ${RESET}"
-read -r CONFIRM
-[[ "$CONFIRM" != "yes" ]] && err "Aborted by user."
+warn "You chose: ${DISK}"
+echo -ne "   ${GOLD}Type 'yes' to confirm erase: ${RESET}"
+read -r C; [[ "$C" != "yes" ]] && err "Aborted."
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 2 of 6 — Filesystem Type"
+# STEP 2 — FILESYSTEM
 # ══════════════════════════════════════════════════════════════════════════════
-menu "Choose root filesystem:" \
-    "ext4   — Stable, widely supported (recommended)" \
-    "btrfs  — Modern, supports snapshots" \
-    "xfs    — High performance, good for large files"
+header 2 "Choose Filesystem"
+info "Not sure? Pick ext4 — it works great for everyone.\n"
 
-case $REPLY in
-    1) FSTYPE="ext4"  ;;
-    2) FSTYPE="btrfs" ;;
-    3) FSTYPE="xfs"   ;;
-esac
+menu "Select filesystem" \
+    "ext4   — Reliable, fast, recommended for most users" \
+    "btrfs  — Modern, supports snapshots and compression" \
+    "xfs    — High performance, great for large files"
+
+FSTYPES=("ext4" "btrfs" "xfs")
+FSTYPE="${FSTYPES[$CHOICE]}"
 log "Filesystem: ${FSTYPE}"
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 3 of 6 — Timezone"
+# STEP 3 — TIMEZONE
 # ══════════════════════════════════════════════════════════════════════════════
-menu "Select your region:" \
-    "Africa" "Americas" "Asia" "Atlantic" "Australia" \
-    "Europe" "Indian" "Pacific" "UTC (skip)"
+header 3 "Choose Your Timezone"
 
-REGIONS=("Africa" "America" "Asia" "Atlantic" "Australia" "Europe" "Indian" "Pacific" "UTC")
-REGION="${REGIONS[$((REPLY-1))]}"
+REGION_LABELS=("Africa" "Americas" "Asia" "Atlantic" "Australia" "Europe" "Indian" "Pacific" "UTC — Skip (use UTC)")
+REGION_DIRS=("Africa" "America" "Asia" "Atlantic" "Australia" "Europe" "Indian" "Pacific" "UTC")
+
+menu "Select your region" "${REGION_LABELS[@]}"
+REGION="${REGION_DIRS[$CHOICE]}"
 
 if [[ "$REGION" == "UTC" ]]; then
     TIMEZONE="UTC"
 else
-    mapfile -t TZ_LIST < <(find /usr/share/zoneinfo/"$REGION" -maxdepth 1 -type f | \
-        sed "s|/usr/share/zoneinfo/||" | sort)
     echo ""
-    echo -e "  ${WHITE}${BOLD}Select city/timezone:${RESET}\n"
+    mapfile -t TZ_LIST < <(find /usr/share/zoneinfo/"$REGION" -maxdepth 1 -type f \
+        | sed "s|/usr/share/zoneinfo/||" | sort)
+    echo -e "   ${WHITE}${BOLD}Select city / timezone:${RESET}\n"
     for i in "${!TZ_LIST[@]}"; do
-        printf "    ${TEAL}[%2d]${RESET}  %s\n" "$((i+1))" "${TZ_LIST[$i]}"
+        printf "   ${TEAL}%3d${RESET}  %s\n" "$((i+1))" "${TZ_LIST[$i]}"
     done
     echo ""
     while true; do
-        echo -ne "  ${GOLD}Select [1-${#TZ_LIST[@]}]: ${RESET}"
-        read -r REPLY
-        if [[ "$REPLY" =~ ^[0-9]+$ ]] && (( REPLY >= 1 && REPLY <= ${#TZ_LIST[@]} )); then
-            break
+        echo -ne "   ${GOLD}Select [1-${#TZ_LIST[@]}]: ${RESET}"
+        read -r R
+        if [[ "$R" =~ ^[0-9]+$ ]] && (( R >= 1 && R <= ${#TZ_LIST[@]} )); then
+            TIMEZONE="${TZ_LIST[$((R-1))]}"; break
         fi
-        echo -e "  ${RED}Invalid selection${RESET}"
+        echo -e "   ${RED}Invalid selection${RESET}"
     done
-    TIMEZONE="${TZ_LIST[$((REPLY-1))]}"
 fi
 log "Timezone: ${TIMEZONE}"
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 4 of 6 — Locale & Hostname"
+# STEP 4 — LOCALE & HOSTNAME
 # ══════════════════════════════════════════════════════════════════════════════
-menu "Select locale:" \
-    "en_US.UTF-8  — English (United States)" \
-    "en_GB.UTF-8  — English (United Kingdom)" \
-    "en_AU.UTF-8  — English (Australia)" \
-    "de_DE.UTF-8  — German" \
-    "fr_FR.UTF-8  — French" \
-    "es_ES.UTF-8  — Spanish" \
-    "pt_BR.UTF-8  — Portuguese (Brazil)" \
-    "zh_CN.UTF-8  — Chinese (Simplified)" \
-    "ja_JP.UTF-8  — Japanese" \
-    "sw_KE.UTF-8  — Swahili (Kenya)"
+header 4 "Language & Computer Name"
+
+menu "Select your language" \
+    "English — United States  (en_US.UTF-8)" \
+    "English — United Kingdom (en_GB.UTF-8)" \
+    "English — Australia      (en_AU.UTF-8)" \
+    "German                   (de_DE.UTF-8)" \
+    "French                   (fr_FR.UTF-8)" \
+    "Spanish                  (es_ES.UTF-8)" \
+    "Portuguese — Brazil      (pt_BR.UTF-8)" \
+    "Chinese — Simplified     (zh_CN.UTF-8)" \
+    "Japanese                 (ja_JP.UTF-8)" \
+    "Swahili — Kenya          (sw_KE.UTF-8)"
 
 LOCALES=("en_US.UTF-8" "en_GB.UTF-8" "en_AU.UTF-8" "de_DE.UTF-8" "fr_FR.UTF-8" \
          "es_ES.UTF-8" "pt_BR.UTF-8" "zh_CN.UTF-8" "ja_JP.UTF-8" "sw_KE.UTF-8")
-LOCALE="${LOCALES[$((REPLY-1))]}"
-log "Locale: ${LOCALE}"
+LOCALE="${LOCALES[$CHOICE]}"
+log "Language: ${LOCALE}"
 
 echo ""
-echo -ne "  ${GOLD}Computer name (hostname) [nganjo-os]: ${RESET}"
+echo -ne "   ${GOLD}Computer name ${GRAY}(press Enter for 'nganjo-os')${GOLD}: ${RESET}"
 read -r HOSTNAME
 HOSTNAME="${HOSTNAME:-nganjo-os}"
-HOSTNAME="${HOSTNAME// /-}"   # no spaces
-log "Hostname: ${HOSTNAME}"
+HOSTNAME="${HOSTNAME// /-}"
+log "Computer name: ${HOSTNAME}"
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 5 of 6 — Create Your Account"
+# STEP 5 — USER ACCOUNT
 # ══════════════════════════════════════════════════════════════════════════════
+header 5 "Create Your Account"
+info "This will be your main login account.\n"
+
 while true; do
-    echo -ne "  ${GOLD}Username: ${RESET}"
+    echo -ne "   ${GOLD}Username: ${RESET}"
     read -r USERNAME
     [[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]] && break
-    echo -e "  ${RED}Invalid — use lowercase letters, numbers, _ or - only${RESET}"
-done
-
-while true; do
-    echo -ne "  ${GOLD}Password: ${RESET}"
-    read -rs USER_PASS; echo ""
-    echo -ne "  ${GOLD}Confirm password: ${RESET}"
-    read -rs USER_PASS2; echo ""
-    [[ "$USER_PASS" == "$USER_PASS2" ]] && break
-    echo -e "  ${RED}Passwords do not match — try again${RESET}"
+    echo -e "   ${RED}Use lowercase letters, numbers, _ or - only${RESET}"
 done
 
 echo ""
-echo -ne "  ${GOLD}Root password (leave blank = same as user): ${RESET}"
+while true; do
+    echo -ne "   ${GOLD}Password: ${RESET}"
+    read -rs P1; echo ""
+    echo -ne "   ${GOLD}Confirm:  ${RESET}"
+    read -rs P2; echo ""
+    [[ "$P1" == "$P2" ]] && USER_PASS="$P1" && break
+    echo -e "   ${RED}Passwords don't match — try again${RESET}\n"
+done
+
+echo ""
+echo -ne "   ${GOLD}Root password ${GRAY}(Enter = same as above)${GOLD}: ${RESET}"
 read -rs ROOT_PASS; echo ""
 [[ -z "$ROOT_PASS" ]] && ROOT_PASS="$USER_PASS"
 
 # ══════════════════════════════════════════════════════════════════════════════
-step "Step 6 of 6 — Review & Install"
+# STEP 6 — CONFIRM & INSTALL
 # ══════════════════════════════════════════════════════════════════════════════
-echo -e "  ${WHITE}${BOLD}Installation summary:${RESET}\n"
-echo -e "  ${TEAL}Disk      :${RESET} ${DISK}"
-echo -e "  ${TEAL}Filesystem:${RESET} ${FSTYPE}"
-echo -e "  ${TEAL}Timezone  :${RESET} ${TIMEZONE}"
-echo -e "  ${TEAL}Locale    :${RESET} ${LOCALE}"
-echo -e "  ${TEAL}Hostname  :${RESET} ${HOSTNAME}"
-echo -e "  ${TEAL}Username  :${RESET} ${USERNAME}"
+header 6 "Review & Install"
+
+echo -e "   ${WHITE}${BOLD}Your choices:${RESET}\n"
+echo -e "   ${TEAL}Disk        ${RESET}${WHITE}${DISK}${RESET}"
+echo -e "   ${TEAL}Filesystem  ${RESET}${WHITE}${FSTYPE}${RESET}"
+echo -e "   ${TEAL}Timezone    ${RESET}${WHITE}${TIMEZONE}${RESET}"
+echo -e "   ${TEAL}Language    ${RESET}${WHITE}${LOCALE}${RESET}"
+echo -e "   ${TEAL}Hostname    ${RESET}${WHITE}${HOSTNAME}${RESET}"
+echo -e "   ${TEAL}Username    ${RESET}${WHITE}${USERNAME}${RESET}"
 echo ""
-warn "Ready to install. This cannot be undone."
-echo -ne "  ${GOLD}Start installation? [yes/no]: ${RESET}"
-read -r GO
-[[ "$GO" != "yes" ]] && err "Aborted."
+warn "Everything on ${DISK} will be erased. This cannot be undone."
+echo ""
+echo -ne "   ${GOLD}Start installation? [yes/no]: ${RESET}"
+read -r GO; [[ "$GO" != "yes" ]] && err "Aborted."
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PARTITION & FORMAT
+# INSTALL — automated from here
 # ══════════════════════════════════════════════════════════════════════════════
-echo ""
-log "Partitioning ${DISK}..."
+clear; banner
+echo -e "   ${TEAL}──────────────────────────────────────────────────────────────${RESET}"
+echo -e "   ${BOLD}${WHITE}Installing Ng'anjo OS...${RESET}"
+echo -e "   ${TEAL}──────────────────────────────────────────────────────────────${RESET}\n"
+
+_task() { echo -e "   ${TEAL}▸${RESET}  $1"; }
+_done() { echo -e "   ${GREEN}✓${RESET}  $1"; }
+
+# Partition
+_task "Partitioning ${DISK}..."
 wipefs -af "$DISK" &>/dev/null
 sgdisk -Z "$DISK" &>/dev/null
 sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI"  "$DISK" &>/dev/null
 sgdisk -n 2:0:0     -t 2:8300 -c 2:"ROOT" "$DISK" &>/dev/null
 partprobe "$DISK"; sleep 1
+[[ "$DISK" == *nvme* || "$DISK" == *mmcblk* ]] && \
+    PART_EFI="${DISK}p1" PART_ROOT="${DISK}p2" || \
+    PART_EFI="${DISK}1"  PART_ROOT="${DISK}2"
+_done "Partitioned"
 
-if [[ "$DISK" == *"nvme"* ]] || [[ "$DISK" == *"mmcblk"* ]]; then
-    PART_EFI="${DISK}p1"; PART_ROOT="${DISK}p2"
-else
-    PART_EFI="${DISK}1";  PART_ROOT="${DISK}2"
-fi
-
-log "Formatting EFI partition..."
+# Format
+_task "Formatting partitions..."
 mkfs.fat -F32 -n EFI "$PART_EFI" &>/dev/null
-
-log "Formatting root partition (${FSTYPE})..."
 case $FSTYPE in
-    ext4)  mkfs.ext4  -L ROOT -F  "$PART_ROOT" &>/dev/null ;;
-    btrfs) mkfs.btrfs -L ROOT -f  "$PART_ROOT" &>/dev/null ;;
-    xfs)   mkfs.xfs   -L ROOT -f  "$PART_ROOT" &>/dev/null ;;
+    ext4)  mkfs.ext4  -L ROOT -F "$PART_ROOT" &>/dev/null ;;
+    btrfs) mkfs.btrfs -L ROOT -f "$PART_ROOT" &>/dev/null ;;
+    xfs)   mkfs.xfs   -L ROOT -f "$PART_ROOT" &>/dev/null ;;
 esac
+_done "Formatted (EFI: fat32, Root: ${FSTYPE})"
 
-log "Mounting partitions..."
-mkdir -p "${MOUNT}"
-mount "$PART_ROOT" "${MOUNT}"
-mkdir -p "${MOUNT}/boot/efi"
-mount "$PART_EFI"  "${MOUNT}/boot/efi"
+# Mount
+_task "Mounting..."
+mkdir -p "${MOUNT}"; mount "$PART_ROOT" "${MOUNT}"
+mkdir -p "${MOUNT}/boot/efi"; mount "$PART_EFI" "${MOUNT}/boot/efi"
+_done "Mounted"
 
-# ══════════════════════════════════════════════════════════════════════════════
-# INSTALL SYSTEM
-# ══════════════════════════════════════════════════════════════════════════════
+# Install files
+_task "Installing system files (this takes a few minutes)..."
 SFS=$(find /run/archiso /run/mnt -name "airootfs.sfs" 2>/dev/null | head -1)
-[[ -z "$SFS" ]] && err "Cannot find airootfs.sfs — boot from the live ISO first."
+[[ -z "$SFS" ]] && err "Cannot find airootfs.sfs — boot from the live ISO."
+unsquashfs -f -d "${MOUNT}" "$SFS" &>/dev/null
+_done "System files installed"
 
-log "Installing system files (this takes a few minutes)..."
-unsquashfs -f -d "${MOUNT}" "$SFS" | \
-    awk '/\[/ { printf "\r  \033[38;2;0;210;180m[installing]\033[0m %s%%", $NF } END { print "" }'
-log "System files installed."
-
-# ══════════════════════════════════════════════════════════════════════════════
-# CONFIGURE IN CHROOT
-# ══════════════════════════════════════════════════════════════════════════════
-log "Generating fstab..."
+# fstab
+_task "Generating fstab..."
 genfstab -U "${MOUNT}" >> "${MOUNT}/etc/fstab"
+_done "fstab generated"
 
-log "Configuring system..."
-cat > "${MOUNT}/root/_nganjo_cfg.sh" << CHROOTEOF
+# Chroot config
+_task "Configuring system (locale, users, bootloader)..."
+cat > "${MOUNT}/root/_cfg.sh" << CHROOTEOF
 #!/usr/bin/env bash
 set -e
-
-# Locale
 echo "${LOCALE} UTF-8" > /etc/locale.gen
 locale-gen &>/dev/null
 echo "LANG=${LOCALE}" > /etc/locale.conf
-
-# Timezone
 ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 hwclock --systohc 2>/dev/null || true
-
-# Hostname
 echo "${HOSTNAME}" > /etc/hostname
 printf "127.0.0.1 localhost\n::1 localhost\n127.0.1.1 ${HOSTNAME}.localdomain ${HOSTNAME}\n" > /etc/hosts
-
-# Users
 echo "root:${ROOT_PASS}" | chpasswd
 useradd -m -G wheel,audio,video,storage,optical,network,input -s /bin/zsh "${USERNAME}" 2>/dev/null || true
 echo "${USERNAME}:${USER_PASS}" | chpasswd
 echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/wheel
 chmod 440 /etc/sudoers.d/wheel
 userdel -r nganjo 2>/dev/null || true
-rm -f /etc/sudoers.d/nganjo-live
-
-# Remove live auto-login
-rm -f /etc/gdm/custom.conf
-rm -f /etc/sddm.conf.d/autologin.conf
-
-# Shell
+rm -f /etc/sudoers.d/nganjo-live /etc/gdm/custom.conf /etc/sddm.conf.d/autologin.conf
 chsh -s /bin/zsh root 2>/dev/null || true
 chsh -s /bin/zsh "${USERNAME}" 2>/dev/null || true
-
-# Initramfs
 mkinitcpio -P &>/dev/null
-
-# Bootloader
-grub-install --target=x86_64-efi --efi-directory=/boot/efi \
-    --bootloader-id=NganjoOS --recheck &>/dev/null
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=NganjoOS --recheck &>/dev/null
 grub-mkconfig -o /boot/grub/grub.cfg &>/dev/null
-
-# Services
 systemctl enable NetworkManager systemd-timesyncd 2>/dev/null || true
-for svc in bluetooth ufw apparmor zram-generator nganjo-cpu-performance; do
-    systemctl enable "\$svc" 2>/dev/null || true
+for s in bluetooth ufw apparmor zram-generator nganjo-cpu-performance; do
+    systemctl enable "\$s" 2>/dev/null || true
 done
 command -v sddm &>/dev/null && systemctl enable sddm || \
 command -v gdm  &>/dev/null && systemctl enable gdm  || true
 systemctl disable avahi-daemon 2>/dev/null || true
+rm -f /root/.automated_script.sh /root/customize_airootfs.sh
 CHROOTEOF
+chmod +x "${MOUNT}/root/_cfg.sh"
+arch-chroot "${MOUNT}" /root/_cfg.sh
+rm -f "${MOUNT}/root/_cfg.sh"
+_done "System configured"
 
-chmod +x "${MOUNT}/root/_nganjo_cfg.sh"
-arch-chroot "${MOUNT}" /root/_nganjo_cfg.sh
-rm -f "${MOUNT}/root/_nganjo_cfg.sh"
-
-# ══════════════════════════════════════════════════════════════════════════════
-# CLEANUP
-# ══════════════════════════════════════════════════════════════════════════════
-log "Cleaning up live artifacts..."
-rm -f "${MOUNT}/root/.automated_script.sh" \
-      "${MOUNT}/root/customize_airootfs.sh"
-
-log "Unmounting..."
+# Unmount
+_task "Unmounting..."
 umount -R "${MOUNT}"
+_done "Done"
 
-# ══════════════════════════════════════════════════════════════════════════════
-# DONE
-# ══════════════════════════════════════════════════════════════════════════════
+# ── Finish ────────────────────────────────────────────────────────────────────
 echo ""
-echo -e "  ${GREEN}${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}"
-echo -e "  ${GREEN}${BOLD}║   Installation Complete! Ng'anjo OS is ready.               ║${RESET}"
-echo -e "  ${GREEN}${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
+echo -e "   ${GREEN}${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}"
+echo -e "   ${GREEN}${BOLD}║                                                              ║${RESET}"
+echo -e "   ${GREEN}${BOLD}║   ✓  Installation Complete!                                 ║${RESET}"
+echo -e "   ${GREEN}${BOLD}║      Ng'anjo OS is ready on ${DISK}              ║${RESET}"
+echo -e "   ${GREEN}${BOLD}║                                                              ║${RESET}"
+echo -e "   ${GREEN}${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
 echo ""
-echo -e "  ${TEAL}User    :${RESET} ${WHITE}${USERNAME}${RESET}"
-echo -e "  ${TEAL}Hostname:${RESET} ${WHITE}${HOSTNAME}${RESET}"
-echo -e "  ${TEAL}Timezone:${RESET} ${WHITE}${TIMEZONE}${RESET}"
+echo -e "   ${TEAL}Username  ${RESET}${WHITE}${USERNAME}${RESET}"
+echo -e "   ${TEAL}Hostname  ${RESET}${WHITE}${HOSTNAME}${RESET}"
+echo -e "   ${TEAL}Timezone  ${RESET}${WHITE}${TIMEZONE}${RESET}"
 echo ""
-echo -e "  ${GOLD}Remove the USB drive and reboot:${RESET}"
-echo -e "  ${TEAL}    reboot${RESET}"
+echo -e "   ${GOLD}Remove the USB drive, then reboot:${RESET}"
+echo -e "   ${TEAL}     reboot${RESET}"
 echo ""
