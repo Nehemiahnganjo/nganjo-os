@@ -1,0 +1,22 @@
+[General]
+ColorScheme=NganjoOS
+Name=Ng'anjo OS
+shadeSortColumn=true
+widgetStyle=Breeze
+
+[Icons]
+Theme=Papirus-Dark
+
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop
+SingleClick=false
+contrast=4
+AnimationDurationFactor=0.5
+
+[WM]
+activeBackground=13,20,28
+activeBlend=0,210,180
+activeForeground=230,237,245
+inactiveBackground=10,16,22
+inactiveBlend=50,60,70
+inactiveForeground=100,120,140
