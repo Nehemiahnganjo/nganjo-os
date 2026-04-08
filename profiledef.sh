@@ -11,6 +11,8 @@ iso_version="1.0-lite"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=(
+    'bios.syslinux.mbr'
+    'bios.syslinux.eltorito'
     'uefi.systemd-boot'
 )
 arch="x86_64"
