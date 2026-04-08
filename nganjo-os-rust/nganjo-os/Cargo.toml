@@ -1,0 +1,41 @@
+[package]
+name        = "nganjo-os"
+version     = "2.0.0"
+edition     = "2021"
+authors     = ["Ng'anjo OS"]
+description = "Power TUI — the terminal interface that beats any GUI"
+license     = "MIT"
+
+[[bin]]
+name = "nganjo"
+path = "src/main.rs"
+
+[dependencies]
+# TUI
+ratatui   = "0.26"
+crossterm = "0.27"
+
+# System info (replaces psutil)
+sysinfo = "0.30"
+
+# Async runtime (for subprocess calls without blocking the UI)
+tokio = { version = "1", features = ["full"] }
+
+# File system helpers
+walkdir = "2"
+
+# Date / time
+chrono = "0.4"
+
+# Error handling
+anyhow = "1"
+
+# Pretty byte sizes
+bytesize = "1"
+
+[profile.release]
+opt-level     = 3
+lto           = true
+codegen-units = 1
+strip         = true    # strips debug symbols → smaller binary
+panic         = "abort"
