@@ -1,0 +1,111 @@
+# Ng'anjo OS — NeoDesktop Edition Package List
+# Minimal Wayland stack + egui runtime deps, no full DE
+# Creator: Nehemiah Ng'anjo
+
+# ── BASE ───────────────────────────────────────────────────────────────────────
+base
+base-devel
+linux
+linux-firmware
+systemd
+systemd-sysvcompat
+dbus
+polkit
+sudo
+mkinitcpio
+mkinitcpio-archiso
+archiso
+
+# ── MICROCODE ──────────────────────────────────────────────────────────────────
+amd-ucode
+intel-ucode
+terminus-font
+
+# ── BOOT & FILESYSTEM ──────────────────────────────────────────────────────────
+grub
+efibootmgr
+os-prober
+memtest86+
+memtest86+-efi
+btrfs-progs
+e2fsprogs
+ntfs-3g
+exfatprogs
+xfsprogs
+f2fs-tools
+lvm2
+cryptsetup
+dosfstools
+parted
+gptfdisk
+syslinux
+
+# ── NETWORKING ─────────────────────────────────────────────────────────────────
+networkmanager
+wpa_supplicant
+iwd
+dhcpcd
+openssh
+curl
+wget
+iproute2
+iputils
+avahi
+nss-mdns
+
+# ── DISPLAY — Wayland + egui/eframe runtime deps ──────────────────────────────
+wayland
+xorg-xwayland
+mesa
+libglvnd
+vulkan-icd-loader
+vulkan-intel
+vulkan-radeon
+libxkbcommon
+libxkbcommon-x11
+xkeyboard-config
+
+# ── DISPLAY MANAGER ────────────────────────────────────────────────────────────
+sddm
+
+# ── AUDIO ──────────────────────────────────────────────────────────────────────
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-audio
+wireplumber
+
+# ── BLUETOOTH ──────────────────────────────────────────────────────────────────
+bluez
+bluez-utils
+
+# ── FONTS ──────────────────────────────────────────────────────────────────────
+noto-fonts
+noto-fonts-emoji
+ttf-dejavu
+ttf-jetbrains-mono
+
+# ── SHELL & TOOLS ──────────────────────────────────────────────────────────────
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+zsh-completions
+fzf
+git
+less
+man-db
+htop
+btop
+fastfetch
+bat
+eza
+rsync
+unzip
+zip
+ufw
+apparmor
+zram-generator
+reflector
+flatpak
+firefox
+plymouth
