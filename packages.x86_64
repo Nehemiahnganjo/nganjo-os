@@ -179,3 +179,4 @@ firefox
 
 # ── INSTALLER ──────────────────────────────────────────────────────────────────
 # calamares installed via AUR in setup_chroot_kde.sh
+syslinux
