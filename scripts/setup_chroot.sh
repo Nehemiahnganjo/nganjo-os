@@ -90,44 +90,18 @@ else
     cd /tmp
     git clone https://aur.archlinux.org/yay.git
     cd yay
-    # Build yay as nganjo user
     sudo -u nganjo HOME=/home/nganjo makepkg -si --noconfirm 2>/dev/null || \
         makepkg -si --noconfirm --asroot 2>/dev/null || true
     cd /
     rm -rf /tmp/yay
     log "yay installed."
 
-    # ── Calamares — build directly from AUR source (most reliable method) ────
-    log "Building Calamares installer..."
-    pacman -S --needed --noconfirm \
-        cmake extra-cmake-modules boost boost-libs \
-        kpmcore qt6-base qt6-declarative qt6-svg qt6-tools \
-        python python-yaml python-jsonschema \
-        ckbcomp hwinfo libpwquality 2>/dev/null || true
-    cd /tmp
-    git clone https://aur.archlinux.org/calamares.git calamares-aur
-    cd calamares-aur
-    sudo -u nganjo HOME=/home/nganjo makepkg -si --noconfirm --skippgpcheck 2>/dev/null || \
-        makepkg -si --noconfirm --asroot --skippgpcheck 2>/dev/null || true
-    cd /
-    rm -rf /tmp/calamares-aur
-    command -v calamares &>/dev/null && log "Calamares installed successfully." || \
-        log "WARNING: Calamares build failed — installer will show manual guide."
-
     log "Installing AUR branding packages..."
     export HOME=/home/nganjo
-    # Install brave-bin first separately (large package, needs its own build)
-    log "Building brave-bin..."
     sudo -u nganjo yay -S --noconfirm --needed brave-bin 2>/dev/null && \
-        log "brave-bin installed." || log "brave-bin failed — will retry via flatpak fallback."
-
-    # Flatpak fallback for brave if AUR failed
-    if ! command -v brave &>/dev/null && ! command -v brave-browser &>/dev/null; then
-        log "Brave AUR failed — firefox is already installed as fallback."
-    fi
+        log "brave-bin installed." || log "brave-bin failed — firefox is the fallback."
 
     sudo -u nganjo yay -S --noconfirm --needed \
-        calamares \
         papirus-icon-theme \
         bibata-cursor-theme-bin \
         adw-gtk3 \
