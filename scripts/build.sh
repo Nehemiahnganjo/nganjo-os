@@ -54,6 +54,7 @@ for arg in "$@"; do
         --kde)   EDITION="kde"  ;;
         --gnome) EDITION="gnome";;
         --tui)   EDITION="tui"  ;;
+        --neo)   EDITION="neo"  ;;
     esac
 done
 
