@@ -81,25 +81,7 @@ chown -R nganjo:nganjo /home/nganjo
 gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
 
 # ── Calamares — swap services config for KDE (sddm instead of gdm) ───────────
-log "Patching Calamares services config for KDE..."
-cat > /etc/calamares/modules/services-systemd.conf << 'EOF'
----
-services:
-  - name: NetworkManager
-    mandatory: true
-  - name: sddm
-    mandatory: true
-  - name: bluetooth
-    mandatory: false
-  - name: avahi-daemon
-    mandatory: false
-  - name: ufw
-    mandatory: false
-  - name: apparmor
-    mandatory: false
-  - name: fstrim.timer
-    mandatory: false
-EOF
+# (calamares removed — using nganjo-install terminal installer)
 
 # ── AUR packages ─────────────────────────────────────────────────────────────
 if ! curl -s --max-time 5 https://archlinux.org > /dev/null 2>&1; then
@@ -113,19 +95,6 @@ else
     sudo -u nganjo HOME=/home/nganjo makepkg -si --noconfirm 2>/dev/null || \
         makepkg -si --noconfirm --asroot 2>/dev/null || true
     cd / && rm -rf /tmp/yay
-
-log "Building Calamares..."
-    pacman -S --needed --noconfirm \
-        cmake extra-cmake-modules boost boost-libs \
-        kpmcore qt6-base qt6-declarative qt6-svg qt6-tools \
-        python python-yaml python-jsonschema \
-        ckbcomp hwinfo libpwquality 2>/dev/null || true
-    cd /tmp
-    git clone https://aur.archlinux.org/calamares.git calamares-aur
-    cd calamares-aur
-    sudo -u nganjo HOME=/home/nganjo makepkg -si --noconfirm --skippgpcheck 2>/dev/null || \
-        makepkg -si --noconfirm --asroot --skippgpcheck 2>/dev/null || true
-    cd / && rm -rf /tmp/calamares-aur
 
     log "Installing AUR extras..."
     sudo -u nganjo yay -S --noconfirm --needed \
